@@ -1,0 +1,272 @@
+{% extends "base1.html" %}
+{% block content %}
+<div>
+	<h1>Rate of Growth Statistics<h1>
+</div>
+<div class="col span_1_of_2">		
+	<p>Accumulated Followers / Hour over Time </p>
+		<ul>
+			<li>Data is collected via a program continuously running on a server in Python script using Instagrams API</li>
+			<li>A new datapoint is logged into a csv file located on that server every 30 minutes</li>
+		</ul>
+		<br>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.0/jquery.min.js"></script>
+<script src="http://code.highcharts.com/stock/highstock.js"></script>
+<script src="http://code.highcharts.com/stock/modules/exporting.js"></script>
+
+<div id="container" style="min-width: 310px; height: 400px; margin: 0 auto"></div>
+
+<script>
+$(function () {
+
+    $.getJSON('http://www.highcharts.com/samples/data/jsonp.php?filename=large-dataset.json&callback=?', function (data) {
+
+        // Create a timer
+        var start = +new Date();
+
+        // Create the chart
+        $('#container').highcharts('StockChart', {
+            chart: {
+                events: {
+                    load: function () {
+                        this.setTitle(null, {
+                            text: 'Built chart in ' + (new Date() - start) + 'ms'
+                        });
+                    }
+                },
+                zoomType: 'x'
+            },
+
+            rangeSelector: {
+                
+                buttons: [{
+
+                    type: 'day',
+                    count: 1,
+                    text: '1d'
+                }, 
+                {
+                    type: 'day',
+                    count: 3,
+                    text: '3d'
+                }, {
+                    type: 'week',
+                    count: 1,
+                    text: '1w'
+                }, {
+                    type: 'month',
+                    count: 1,
+                    text: '1m'
+                }, {
+                    type: 'month',
+                    count: 6,
+                    text: '6m'
+                }, {
+                    type: 'year',
+                    count: 1,
+                    text: '1y'
+                }, {
+                    type: 'all',
+                    text: 'All'
+                }],
+                selected: 3
+            },
+
+            yAxis: {
+                title: {
+                    text: 'Followers Added'
+                }
+            },
+
+            title: {
+                text: 'Followers added per Hour'
+            },
+
+            subtitle: {
+                text: 'Built chart in ...' // dummy text to reserve space for dynamic subtitle
+            },
+
+            series: [{
+                name: 'Added',
+                data: [{% for i in range(length) %} {{ data[i+2] }}, {% endfor %}],
+                pointStart: Date.UTC(2014, 10, 15),
+                pointInterval: 3600 * 1000,
+                tooltip: {
+                    value: 1,
+                    valueSuffix: ' Follwers'
+                }
+            }]
+
+        });
+    });
+});
+
+</script>
+
+<script>
+// Load the fonts
+Highcharts.createElement('link', {
+   href: 'http://fonts.googleapis.com/css?family=Signika:400,700',
+   rel: 'stylesheet',
+   type: 'text/css'
+}, null, document.getElementsByTagName('head')[0]);
+
+// Add the background image to the container
+Highcharts.wrap(Highcharts.Chart.prototype, 'getContainer', function (proceed) {
+   proceed.call(this);
+   this.container.style.background = 'url(http://www.highcharts.com/samples/graphics/sand.png)';
+});
+
+
+Highcharts.theme = {
+   colors: ["#f45b5b", "#8085e9", "#8d4654", "#7798BF", "#aaeeee", "#ff0066", "#eeaaee",
+      "#55BF3B", "#DF5353", "#7798BF", "#aaeeee"],
+   chart: {
+      backgroundColor: null,
+      style: {
+         fontFamily: "Comic Sans MS"
+      }
+   },
+   title: {
+      style: {
+         color: 'black',
+         fontSize: '16px',
+         fontWeight: 'bold'
+      }
+   },
+   subtitle: {
+      style: {
+         color: 'black'
+      }
+   },
+   tooltip: {
+      borderWidth: 0
+   },
+   legend: {
+      itemStyle: {
+         fontWeight: 'bold',
+         fontSize: '13px'
+      }
+   },
+   xAxis: {
+      labels: {
+         style: {
+            color: '#6e6e70'
+         }
+      }
+   },
+   yAxis: {
+      labels: {
+         style: {
+            color: '#6e6e70'
+         }
+      }
+   },
+   plotOptions: {
+      series: {
+         shadow: true
+      },
+      candlestick: {
+         lineColor: '#404048'
+      },
+      map: {
+         shadow: false
+      }
+   },
+
+   // Highstock specific
+   navigator: {
+      xAxis: {
+         gridLineColor: '#D0D0D8'
+      }
+   },
+   rangeSelector: {
+      buttonTheme: {
+         fill: 'white',
+         stroke: '#C0C0C8',
+         'stroke-width': 1,
+         states: {
+            select: {
+               fill: '#D0D0D8'
+            }
+         }
+      }
+   },
+   scrollbar: {
+      trackBorderColor: '#C0C0C8'
+   },
+
+   // General
+   background2: '#E0E0E8'
+   
+};
+// Apply the theme
+Highcharts.setOptions(Highcharts.theme);
+</script>
+ </div>
+ 
+ <div class="col span_1_of_2">
+   	<br>
+ 	<div id="container"></div>
+<div id="sliders">
+  <table>
+    <tr><td>Alpha Angle</td><td><input id="R0" type="range" min="0" max="45" value="15"/> <span id="R0-value" class="value"></span></td></tr>
+      <tr><td>Beta Angle</td><td><input id="R1" type="range" min="0" max="45" value="15"/> <span id="R1-value" class="value"></span></td></tr>
+  </table>
+</div>
+<script>
+$(function () {
+    // Set up the chart
+    var chart = new Highcharts.Chart({
+        chart: {
+            renderTo: 'container',
+            type: 'column',
+            margin: 75,
+            options3d: {
+                enabled: true,
+                alpha: 15,
+                beta: 15,
+                depth: 50,
+                viewDistance: 25
+            }
+        },
+        title: {
+            text: 'Total Followers Added per Day'
+        },
+        subtitle: {
+            text: 'Rotate graph with the sliders below'
+        },
+        plotOptions: {
+            column: {
+                depth: 25
+            }
+        },
+        series: [{
+            data: [{% for i in range(length2) %} {{ total_added[i] }}, {% endfor %}]
+        }]
+    });
+
+    function showValues() {
+        $('#R0-value').html(chart.options.chart.options3d.alpha);
+        $('#R1-value').html(chart.options.chart.options3d.beta);
+    }
+
+    // Activate the sliders
+    $('#R0').on('change', function () {
+        chart.options.chart.options3d.alpha = this.value;
+        showValues();
+        chart.redraw(false);
+    });
+    $('#R1').on('change', function () {
+        chart.options.chart.options3d.beta = this.value;
+        showValues();
+        chart.redraw(false);
+    });
+
+    showValues();
+});
+
+</script>
+
+</div> 
+{% endblock %}

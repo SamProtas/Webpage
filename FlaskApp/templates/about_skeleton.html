@@ -1,0 +1,47 @@
+{% extends "base_skeleton.html" %}
+{% block content %}
+
+
+<div class="container">
+    <div class="row">    
+      <div class="twelve columns" style="margin-top: 8%">
+        <h1 style='text-align: center'> About the webpage </h1>
+
+      </div>
+    </div>
+    <br><br>
+
+	<div class="row">    
+	      <div class="one-half column">
+	        <h3 style='text-align: center'>Languages Utilized</h3>
+	        <ul>
+			<li>Python     - API scraping and all statistical work</li>
+			<li>SQL        - Majority of information storage</li>
+			<li>Flask      - web application framework for webdesign</li>
+			<li>Javascript - Minor usage for chart/graph generation</li>
+			<li>HTML / CSS - The rest of the static web design</li>
+			<li>Crontab    - Daily automated data generation</li>
+			<li>R          - Minor statistical analysis and practice</li>	
+	      </div>
+
+	      <div class="one-half column">
+	        <h3 style='text-align: center'> Project Explanation</h3>
+	        <ul>
+			<li>First at foremost, everything on this webpage is automated rather than static displays of charts and calculations inputted into an html page.  Everything has underlying python code running on a server to update the data as it updates in real life.  </li>
+			<li>Started with Ubuntu server set up, a domain name, and getting my Flask environment online.</li>
+			<li>Dynamic analysis of instagram accounts.  Pulled all information from an account called 'Hungrygrls' and organized it in databases for various graphical analysis.  Additionally created automated datascrapes to track the followers over time every 30 minutes.  </li>
+			<li>Stubhub analysis.  Working to automate the pricing and posting of a set of season tickets I own.  </li>
+			<li>Yahoo Developers API - Currently sifting through data provided by Yahoo Query Language to find trends in my two fantasy football leagues.  Yahoo's organization of their JSON responses is making basic information slightly more difficult to grab than originally anticipated...</li>
+			<li>All of the charts presented throughout the webpage are product of <a href="www.highcharts.com">Highcharts.com</a> API</li>
+			<li>All html/javascript/css was recently done for a more simple/sleek design.  This is still a work in process and will hopefully continue to improve over time.  I rather focus on data analysis at the time being.</li>
+	      </div>
+	 </div>
+
+			
+ </div> 
+
+
+
+
+{% endblock %}
+

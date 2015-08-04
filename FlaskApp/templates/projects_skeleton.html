@@ -1,0 +1,132 @@
+{% extends "base_skeleton.html" %}
+{% block content %}
+
+<style>	
+
+#instagram {
+	
+	border-color:#000000;
+	margin: 0 auto; 
+	margin-top: 5%;
+	width:250px;
+	height:250px;
+	text-align: center;
+	line-height: 300px;
+	font-size: 25pt;
+	content: url("/static/instagram.png"); z-index:-1;
+}
+
+#fantasy {
+	
+	border-color:#000000;
+	margin: 0 auto; 
+	margin-top: 5%;
+	width:300px;
+	height:200px;
+	text-align: center;
+	line-height: 300px;
+	
+	font-size: 25pt;
+	content: url("/static/fantasy.jpg"); z-index:-1;
+}
+#stubhub {
+	
+	border-color:#000000;
+	margin: 0 auto; 
+	margin-top: 5%;
+	width:250px;
+	height:250px;
+	text-align: center;
+	line-height: 300px;
+	
+	font-size: 25pt;
+	content: url("/static/stubhub.jpg"); z-index:-1;
+}
+
+
+#title{
+    font-family: Franklin Gothic;
+}
+
+ </style>
+
+<!-- ##############################################END STYLING######################################################### -->
+
+<br>
+
+<div class="container">
+    <div class="row">    
+      <div class="twelve columns" style="margin-top: 8%">
+        <h1 style='text-align: center'> Select a project </h1>
+
+      </div>
+    </div>
+    <br><br>
+	<div class="row">    
+	      <div class="one-half column">
+	        <h3 style='text-align: center'><a href='/instagram'>Instagram</a></h3>
+	        
+	    	<div id='instagram'></div>
+	      </div>
+
+	      <div class="one-half column">
+	        <h3 style='text-align: center'> <a href='/fantasy_football'>Fantasy Sports</a> </h3>
+	        <div id='fantasy'></div>
+	      </div>
+	 </div>
+<br><br>
+ <div class="row">    
+	      <div class="one-half column">
+	        <h3 style='text-align: center'> <a href='/stubhub'>Stubhub</a>  </h3>
+	        
+	    	<div id='stubhub'></div>
+	      </div>
+
+	      <div class="one-half column">
+	        <h3 style='text-align: center'> Coming Soon </h3>
+	        
+	      </div>
+	 </div>
+
+</div>
+
+<div class="container">
+    
+    <div class="row">
+
+      <div class="twelve columns">
+       
+     
+    </div> 
+  </div>
+</div>
+
+<div class="container">
+    
+    <div class="row">
+
+      <div class="twelve columns">
+       
+     
+    </div> 
+  </div>
+</div>
+
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+{% endblock %}
+

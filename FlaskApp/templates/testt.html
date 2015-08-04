@@ -1,0 +1,72 @@
+
+{% extends "base2_skeleton.html" %}
+{% block content %}
+
+
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.0/jquery.min.js"></script>
+<script src="http://code.highcharts.com/highcharts.js"></script>
+<script src="http://code.highcharts.com/modules/exporting.js"></script>
+<div id="chart-4" style="min-width: 908px; height: 400px; margin: 0 auto"></div>
+
+<script>
+$(function () {
+    $('#chart-4').highcharts({
+        chart: {
+            type: 'column'
+        },
+        title: {
+            text: 'Career Averages Per Season '
+        },
+        subtitle: {
+            text: 'Regular Season'
+        },
+        xAxis: {
+            categories: [ {% for i in range(len_managers) %} '{{ averages.manager_name[i] }}', {% endfor %}
+               
+            ],
+            crosshair: true
+        },
+        yAxis: {
+            min: 0,
+            title: {
+                text: 'Total Per Season'
+            }
+        },
+        tooltip: {
+            headerFormat: '<span style="font-size:10px">{point.key}</span><table>',
+            pointFormat: '<tr><td style="color:{series.color};padding:0">{series.name}: </td>' +
+                '<td style="padding:0"><b>{point.y:.1f} pts</b></td></tr>',
+            footerFormat: '</table>',
+            shared: true,
+            useHTML: true
+        },
+        plotOptions: {
+            column: {
+                pointPadding: 0.2,
+                borderWidth: 0
+            }
+        },
+        series: [{
+            name: 'Avg Wins',
+            data: [{% for i in range(len_managers) %} {{ averages.wins[i] }}, {% endfor %}]
+
+        }, {
+            name: 'Avg Losses',
+            data: [{% for i in range(len_managers) %} {{ averages.losses[i] }}, {% endfor %}]
+
+        }, {
+            name: 'Avg Moves',
+            data: [{% for i in range(len_managers) %} {{ averages.moves[i] }}, {% endfor %}]
+
+        }, {
+            name: 'Avg Trades',
+            data: [{% for i in range(len_managers) %} {{ averages.trades[i] }}, {% endfor %}]
+
+        },  ]
+    });
+});
+</script>
+
+{% endblock %}
+

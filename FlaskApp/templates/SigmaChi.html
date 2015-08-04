@@ -1,0 +1,619 @@
+{% extends "base2_skeleton.html" %}
+{% block content %}
+<style>
+#guzzy {
+
+  margin-left: 1cm;
+
+}
+
+</style>
+
+<div class="container"> 
+    <div class="row">    
+      <div class="twelve columns" style="margin-top: 8%; min-width: 908px">
+        <h1 style='text-align: center'> Freedom Fighters Historical Statistics </h1>
+
+      </div>
+    </div>
+    <br><br>
+ 
+<!-- ################################################   BEGIN  TABLES  ######################################################-->
+
+<div class="row">    
+      <div class="one-half column">
+        <h3 style='text-decoration: underline' > Overall Champions </h3>
+<table table class="sortable">
+  <thead>
+    <tr>
+      <th>Winner</th>
+      <th>Team Name</th>
+      <th>Year</th>
+      <th>Record</th>
+    </tr>
+  </thead>
+  <tbody>
+
+    {% for i in range(length_champions) %}
+    <tr> 
+      <td>{{ first_place.manager_name[i]}}</td>
+      <td>{{ first_place.manager_team[i] }}</td>
+      <td>{{ first_place.year[i] }}</td>
+      <td>{{ first_place.wins[i] }}-{{ first_place.losses[i] }}</td>
+    </tr>
+    {% endfor %}
+
+  </tbody>
+</table>
+
+</div>
+
+<div class="one-half column">
+    <h3 style='text-decoration: underline'> Regular Season Champions </h3>
+<table table class="sortable">
+   <thead>
+    <tr>
+      <th>Winner</th>
+      <th>Team Name</th>
+      <th>Year</th>
+      <th>Record</th>
+    </tr>
+  </thead>
+    <tbody>
+
+  {% for i in range(length_champions) %}
+    <tr> 
+      <td>{{ reg_season_champs.manager_name[i] }}</td>
+      <td>{{ reg_season_champs.manager_team[i] }}</td>
+      <td>{{ reg_season_champs.year[i] }}</td>
+      <td>{{ reg_season_champs.wins[i] }}-{{ reg_season_champs.losses[i] }}</td>
+    </tr>
+    {% endfor %}
+
+  </tbody>
+</table>
+
+</div>
+</div>
+<br><br>
+
+<!-- ################################################   END  TABLES  ######################################################-->
+
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.0/jquery.min.js"></script>
+<script src="http://code.highcharts.com/highcharts.js"></script>
+<script src="http://code.highcharts.com/modules/exporting.js"></script>
+<script src="http://code.highcharts.com/modules/data.js"></script>
+<script src="http://code.highcharts.com/modules/drilldown.js"></script>
+
+<div id="chart-1" style="min-width: 908px; height: 400px; margin: 0 auto"></div>
+</br></br>
+<div id="chart-2" style="min-width: 908px; height: 400px; margin: 0 auto"></div>
+</br></br></br>
+<div id="chart-3" style="min-width: 908px; height: 400px; margin: 0 auto"></div>
+</br></br></br>
+<div id="chart-4" style="min-width: 908px; height: 400px; margin: 0 auto"></div>
+<!-- </br></br></br>
+<div id="chart-5" style="min-width: 310px; height: 400px; margin: 0 auto"></div> -->
+</br></br></br>
+<div id="chart-6" style="min-width: 908px; height: 400px; margin: 0 auto"></div>
+</br></br></br>
+<div id="chart-7" style="min-width: 908px; height: 400px; margin: 0 auto"></div>
+</br></br></br>
+<div id="chart-8" style="min-width: 908px; height: 400px; margin: 0 auto"></div>
+</br></br></br>
+<div id="chart-9" style="min-width: 908px; height: 400px; margin: 0 auto"></div>
+
+
+<script>
+$(function () {
+    $('#chart-1').highcharts({
+        chart: {
+            type: 'column'
+        },
+        title: {
+            text: 'Points compared to league average as a percentage - Reg Season '
+        },
+        xAxis: {
+            categories: [ {% for i in range(df_length) %} '{{ names[i] }}', {% endfor %} ]
+        },
+        yAxis: {
+            title: {
+                text: '% above or below average points'
+            }
+          },
+          tooltip: {
+            pointFormat: '<tr><td style="color:{series.color};padding:0">{series.name}: </td>' +
+                '<td style="padding:0"><b>{point.y:.1f} %</b></td></tr>',
+            footerFormat: '</table>',
+        
+        },
+        credits: {
+            enabled: false
+        },
+
+
+        series: [  {% for i in range(num_of_dfs) %} 
+
+        {  name: '{{ df_points[i].year[0] }}', 
+           data: [ {% for j in range(df_length) %} {{ df_points[i].points[j] }}, {% endfor %} ]
+
+         }, {% endfor %} ]
+         
+    
+    });
+});
+
+</script>
+
+<script>
+
+$(function () {
+    $('#chart-2').highcharts({
+        chart: {
+            type: 'column'
+        },
+        title: {
+            text: 'Career Points For/Against'
+        },
+        subtitle: {
+            text: 'Regular Season'
+        },
+        xAxis: {
+            categories: [ {% for i in range(len_managers) %} '{{ totals.manager_name[i] }}', {% endfor %}
+               
+            ],
+            crosshair: true
+        },
+        yAxis: {
+            min: 0,
+            title: {
+                text: 'Total Points'
+            }
+        },
+        tooltip: {
+            headerFormat: '<span style="font-size:10px">{point.key}</span><table>',
+            pointFormat: '<tr><td style="color:{series.color};padding:0">{series.name}: </td>' +
+                '<td style="padding:0"><b>{point.y:.1f} pts</b></td></tr>',
+            footerFormat: '</table>',
+            shared: true,
+            useHTML: true
+        },
+        plotOptions: {
+            column: {
+                pointPadding: 0.2,
+                borderWidth: 0
+            }
+        },
+        series: [{
+            name: 'Points For',
+            data: [{% for i in range(len_managers) %} {{ totals.points_for[i] }}, {% endfor %}]
+
+        }, {
+            name: 'Points Against',
+            data: [{% for i in range(len_managers) %} {{ totals.points_against[i] }}, {% endfor %}]
+
+        }]
+    });
+});
+</script>
+
+<script>
+$(function () {
+    $('#chart-3').highcharts({
+        chart: {
+            type: 'column'
+        },
+        title: {
+            text: 'More Career Statistics'
+        },
+        subtitle: {
+            text: 'Regular Season'
+        },
+        xAxis: {
+            categories: [ {% for i in range(len_managers) %} '{{ totals.manager_name[i] }}', {% endfor %}
+               
+            ],
+            crosshair: true
+        },
+        yAxis: {
+            min: 0,
+            title: {
+                text: 'Totals'
+            }
+        },
+        tooltip: {
+            headerFormat: '<span style="font-size:10px">{point.key}</span><table>',
+            pointFormat: '<tr><td style="color:{series.color};padding:0">{series.name}: </td>' +
+                '<td style="padding:0"><b>{point.y:.0f} pts</b></td></tr>',
+            footerFormat: '</table>',
+            shared: true,
+            useHTML: true
+        },
+        plotOptions: {
+            column: {
+                pointPadding: 0.2,
+                borderWidth: 0
+            }
+        },
+        series: [{
+            name: 'Total Wins',
+            data: [{% for i in range(len_managers) %} {{ totals.wins[i] }}, {% endfor %}]
+
+        }, {
+            name: 'Total Losses',
+            data: [{% for i in range(len_managers) %} {{ totals.losses[i] }}, {% endfor %}]
+
+        }, {
+            name: 'Total Moves',
+            data: [{% for i in range(len_managers) %} {{ totals.moves[i] }}, {% endfor %}]
+
+        }, {
+            name: 'Total Trades',
+            data: [{% for i in range(len_managers) %} {{ totals.trades[i] }}, {% endfor %}]
+
+        }, {
+            name: 'Total Playoffs Made',
+            data: [{% for i in range(len_managers) %} {{ totals.playoffs[i] }}, {% endfor %}]
+
+        }
+      
+        ]
+    });
+});
+</script>
+
+<script>
+$(function () {
+    $('#chart-4').highcharts({
+        chart: {
+            type: 'column'
+        },
+        title: {
+            text: 'Career Averages Per Season '
+        },
+        subtitle: {
+            text: 'Regular Season'
+        },
+        xAxis: {
+            categories: [ {% for i in range(len_managers) %} '{{ averages_ex.manager_name[i] }}', {% endfor %}
+               
+            ],
+            crosshair: true
+        },
+        yAxis: {
+            min: 0,
+            title: {
+                text: 'Total Per Season'
+            }
+        },
+        tooltip: {
+            headerFormat: '<span style="font-size:10px">{point.key}</span><table>',
+            pointFormat: '<tr><td style="color:{series.color};padding:0">{series.name}: </td>' +
+                '<td style="padding:0"><b>{point.y:.1f} pts</b></td></tr>',
+            footerFormat: '</table>',
+            shared: true,
+            useHTML: true
+        },
+        plotOptions: {
+            column: {
+                pointPadding: 0.2,
+                borderWidth: 0
+            }
+        },
+        series: [{
+            name: 'Avg Wins',
+            data: [{% for i in range(len_managers) %} {{ averages_ex.wins[i] }}, {% endfor %}]
+
+        }, {
+            name: 'Avg Losses',
+            data: [{% for i in range(len_managers) %} {{ averages_ex.losses[i] }}, {% endfor %}]
+
+        }, {
+            name: 'Avg Moves',
+            data: [{% for i in range(len_managers) %} {{ averages_ex.moves[i] }}, {% endfor %}]
+
+        }, {
+            name: 'Avg Trades',
+            data: [{% for i in range(len_managers) %} {{ averages_ex.trades[i] }}, {% endfor %}]
+
+        }, {
+            name: 'Avg Draft Pick',
+            data: [{% for i in range(len_managers) %} {{ draft_pos.pick[i] }}, {% endfor %}]
+
+        }, ]
+    });
+});
+</script>
+
+<script>
+$(function () {
+    $('#chart-6').highcharts({
+        title: {
+            text: 'Average Points per Draft Pick',
+          },
+         
+        
+        subtitle: {
+            text: 'Regular Season',
+            x: -20
+        },
+        xAxis: {
+
+            categories: [{% for i in range(length_n) %} {{ n[1][i] }}, {% endfor %}]
+        },
+        yAxis: {
+            title: {
+                text: 'Points'
+            },
+            plotLines: [{
+                value: 0,
+                width: 1,
+                color: '#808080'
+            }]
+        },
+        tooltip: {
+            valueSuffix: 'pts'
+        },
+        legend: {
+            layout: 'vertical',
+            align: 'right',
+            verticalAlign: 'middle',
+            borderWidth: 0
+        },
+        series: [{
+            name: 'Avg_points',
+            data: [{% for i in range(length_n) %} {{ n[0][i] }}, {% endfor %}]
+        }]
+    });
+});
+
+</script>
+<script>
+
+$(function () {
+    $('#chart-7').highcharts({
+        title: {
+            text: 'Average Place per Draft Pick',
+            x: -20 //center
+        },
+        subtitle: {
+            text: '',
+            x: -20
+        },
+        xAxis: {
+
+            categories: [{% for i in range(length_n) %} {{ n[1][i] }}, {% endfor %}]
+        },
+        yAxis: {
+            title: {
+                text: 'Place'
+            },
+            plotLines: [{
+                value: 0,
+                width: 1,
+                color: '#808080'
+            }]
+        },
+        tooltip: {
+            valueSuffix: ''
+        },
+        legend: {
+            layout: 'vertical',
+            align: 'right',
+            verticalAlign: 'middle',
+            borderWidth: 0
+        },
+        series: [{
+            name: 'Place',
+            data: [{% for i in range(length_n) %} {{ n[2][i] }}, {% endfor %}]
+        }]
+    });
+});
+</script>
+<script>
+
+$(function () {
+    // Create the chart
+    $('#chart-8').highcharts({
+        chart: {
+            type: 'pie'
+        },
+        title: {
+            text: 'Historical Earnings by Manager'
+        },
+        subtitle: {
+            text: 'Click the slices to view where each managers total earnings came from'
+        },
+        plotOptions: {
+            series: {
+                dataLabels: {
+                    enabled: true,
+                    format: '{point.name}: {point.y:.2f}%'
+                }
+            }
+        },
+
+        tooltip: {
+            headerFormat: '<span style="font-size:11px">{series.name}</span><br>',
+            pointFormat: '<span style="color:{point.color}">{point.name}</span>: <b>{point.y:.2f}%</b> of total<br/>'
+        },
+        series: [{
+            name: "Manager",
+            colorByPoint: true,
+
+
+            data: 
+
+            [ {% for i in range(len_managers) %}
+            { name: '{{ earnings.manager[i] }}',
+              y: {{ (earnings.weekly[i] + earnings.yearly[i] + earnings.mostpoints[i] + earnings.regseason[i]) / -total_buyin }} *100,
+              drilldown: '{{ earnings.manager[i] }}'
+
+            },
+
+
+            {% endfor %}
+
+            { name: 'Unclaimed this year',
+              y: {{ (-total_buyin  -  total_earned)  / -total_buyin }} *100,
+              drilldown: 'Unclaimed this year'
+
+            }
+            ]
+          }],
+
+    
+
+
+        drilldown: {
+            series: [ {% for i in range(len_managers) %}
+
+            { name: '{{ earnings.manager[i] }}',
+              id: '{{ earnings.manager[i] }}',
+ 
+             
+    
+
+              data: [ 
+               ["Most points weekly bonus", {{ earnings.weekly[i]  / (earnings.weekly[i] + earnings.yearly[i] + earnings.regseason[i] + earnings.mostpoints[i] + 0.000000000000001) *100}} ],
+               ["Playoffs 1st or 2nd place", {{ earnings.yearly[i] / (earnings.weekly[i] + earnings.yearly[i] + earnings.regseason[i] + earnings.mostpoints[i] +0.000000000000001) *100}} ],
+               ["Regular season title", {{ earnings.regseason[i] / (earnings.weekly[i] + earnings.yearly[i] + earnings.regseason[i] + earnings.mostpoints[i] + 0.000000000000001) *100 }} ],
+               ["Most points regular season", {{ earnings.mostpoints[i] / (earnings.weekly[i] + earnings.yearly[i] + earnings.regseason[i] + earnings.mostpoints[i] + 0.000000000000001) *100 }} ]
+               ] 
+             
+      
+              },
+             {% endfor %}
+
+           ]
+        }
+    });
+});
+
+
+
+</script>
+
+<script>
+$(function () {
+    $('#chart-9').highcharts({
+        chart: {
+            type: 'column'
+        },
+        title: {
+            text: ' Total Earnings'
+        },
+         subtitle: {
+            text: 'The current seasons buy in is deducted when the manager joins the league'
+        },
+        xAxis: {
+            categories: [ {% for i in range(len_managers) %} "{{ earnings.manager[i] }}", {% endfor %} ]
+        },
+        yAxis: {
+            title: {
+                text: '$'
+            }
+          },
+          tooltip: {
+            pointFormat: '<tr><td style="color:{series.color};padding:0">{series.name}: </td>' +
+                '<td style="padding:0"><b>{point.y:.1f} $</b></td></tr>',
+            footerFormat: '</table>',
+        
+        },
+        credits: {
+            enabled: false
+        },
+
+
+        series: [  
+
+        {  name: 'Earnings', 
+           data: [ {% for i in range(len_managers) %} {{ (earnings.buyin[i] + earnings.weekly[i] + earnings.yearly[i] + earnings.regseason[i] + earnings.mostpoints[i]) }}, {% endfor %} ]
+
+         } ]
+         
+    
+    });
+});
+
+</script>
+
+<script>
+// Load the fonts
+Highcharts.createElement('link', {
+   href: '//fonts.googleapis.com/css?family=Dosis:400,600',
+   rel: 'stylesheet',
+   type: 'text/css'
+}, null, document.getElementsByTagName('head')[0]);
+
+Highcharts.theme = {
+   colors: ["#297ACC", "#999999", "#995C00", "#7798BF", "#4C8066", "#666652", "#000000",
+      "#806680", "#DF5353", "#7798BF", "#aaeeee"],
+   chart: {
+      backgroundColor: null,
+      style: {
+         fontFamily: "Franklin Gothic"
+      }
+   },
+   title: {
+      style: {
+         fontSize: '16px',
+         fontWeight: 'none',
+         textTransform: 'uppercase'
+      }
+   },
+   tooltip: {
+      borderWidth: 0,
+      backgroundColor: 'rgba(219,219,216,0.8)',
+      shadow: false
+   },
+   legend: {
+      itemStyle: {
+         fontWeight: 'bold',
+         fontSize: '13px'
+      }
+   },
+   xAxis: {
+      gridLineWidth: 1,
+      labels: {
+         style: {
+            fontSize: '12px'
+         }
+      }
+   },
+   yAxis: {
+      minorTickInterval: 'auto',
+      title: {
+         style: {
+            textTransform: 'uppercase'
+         }
+      },
+      labels: {
+         style: {
+            fontSize: '12px'
+         }
+      }
+   },
+   plotOptions: {
+      candlestick: {
+         lineColor: '#404048'
+      }
+   },
+
+
+   // General
+   background2: '#F0F0EA'
+   
+};
+
+// Apply the theme
+Highcharts.setOptions(Highcharts.theme);
+</script>
+
+
+<br>
+
+
+
+{% endblock %}

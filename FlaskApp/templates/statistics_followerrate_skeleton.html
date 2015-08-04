@@ -1,0 +1,540 @@
+{% extends "base2_skeleton.html" %}
+{% block content %}
+<br>
+<style>
+#guzzy {
+
+  margin-left: 0cm;
+  font: Futura; 
+} 
+#guzzy p{
+  font-style: underlined; 
+  font-size: 18px;
+  
+}
+#guzzy p ul{ 
+  text-align: 2px; 
+  
+}
+</style>
+
+
+<div class="container" style="min-width: 600px">
+    <div class="row">    
+      <div class="twelve columns" style="margin-top: 8%">
+        <h1 style='text-align: center'> Rate of Growth Statistics </h1>
+
+      </div>
+    </div>
+    <br><br>
+
+
+<div>		
+	<p style='margin-left: 5%' >Accumulated Followers / Hour over Time </p>
+		<ul style='margin-left: 5%'>
+			<li>I collect data via a python script continuously running on a server using Instagrams API</li>
+			<li>A new datapoint is automatically inserted into a sql database located on that server ~ every 30 minutes in real time</li>
+      <li>The following plots display random data of collected followers, more analytical type plots to come...</li>
+		</ul>
+		
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.0/jquery.min.js"></script>
+<script src="http://code.highcharts.com/stock/highstock.js"></script>
+<script src="http://code.highcharts.com/stock/modules/exporting.js"></script>
+
+<script src="http://code.highcharts.com/highcharts.js"></script>
+<script src="http://code.highcharts.com/modules/exporting.js"></script>
+
+<script src="http://code.highcharts.com/highcharts.js"></script>
+<script src="http://code.highcharts.com/highcharts-3d.js"></script>
+<script src="http://code.highcharts.com/modules/exporting.js"></script>
+
+
+
+<div id="chart-1" style="min-width: 600px; height: 400px; margin-right: 5% auto"></div>
+
+<br>
+ <div id="guzzy">
+  <p style= "font-size: 18px;" >Hungrygrls was growing linearly from November 2014 - May 2015. On May 8th the account was hacked causing a massive loss of followers.  Read more about the hack our their blog: <a href='https://hungrygrls.wordpress.com'> Hungrygrls Wordpress </a></p>  
+    <li>I fit a linear regression best fit line to the data, resulting in an R^2 value of {{ r2 }}  (Use form below if value is blank)</li>
+    <li>The form below predicts followers based on the slope and intercept from the regression model.  ***Will be updated shortly in response to the hack, rendering the model no longer linear</li>
+    <br/>
+
+      <form method="POST" action="/statistics_followers" id="datesubmit">
+      <b>Enter a number for total followers</b><br>
+      <input type="number" name="Submission" id="enterForm">
+      <br><br>
+      <input type="submit" Value="Submit">
+      </form>
+
+<br/>
+<lu style="font-weight: bold; font-size: 22px;"> Predicted Date: {{ enddate }}</lu>
+<br/>
+</div>
+
+
+<br/>
+<div id="chart-2" style="min-width: 600px; height: 400px; margin: 0 auto"></div>
+<br>
+<div id="chart-3" style="min-width: 600px; height: 400px; margin: 0 auto "></div>
+<br>
+<div id="chart-4" style="min-width: 600px; height: 400px; margin: 0 auto"></div>
+<br>
+
+<div id="chart-5" style="min-width: 600px; height: 400px; margin: 0 auto"></div>
+<br><br>
+<div class="row" style="min-width: 900px">    
+      <div class="twelve columns">
+        <h3 style='text-align: center' > Likes and Comments per city (sortable table)</h3>
+<table table class="sortable">
+  <thead>
+    <tr>
+      <th>City</th>
+      <th>Total Likes</th>
+      <th>Likes per post</th>
+      <th>Max Likes</th>
+      <th>Min Likes</th>
+      <th>Total Comments</th>
+      <th>Comments per post</th>
+      <th>Max Comments</th>
+      <th>Min Comments</th>
+    </tr>
+  </thead>
+  <tbody>
+
+    {% for i in range(length_df_city - 1) %}
+    <tr> 
+      <td>{{ df_city.Cities[i]}}</td>
+      <td>{{ df_city.Total_Likes[i]}}</td>
+      <td>{{ df_city.Likes_Post[i] }}</td>
+      <td>{{ df_city.Max_Likes[i] }}</td>
+      <td>{{ df_city.Min_Likes[i] }}</td>
+      <td>{{ df_city.Total_Comments[i]}}</td>
+      <td>{{ df_city.Comments_Post[i] }}</td>
+      <td>{{ df_city.Max_Comments[i] }}</td>
+      <td>{{ df_city.Min_Comments[i] }}</td>
+    </tr>
+    {% endfor %}
+
+  </tbody>
+<tfoot >
+  <tr>
+    <td style="text-style: bold">Total</td>
+    <td>{{ df_city.Total_Likes[length_df_city - 1]}}</td>
+    <td>{{ df_city.Likes_Post[length_df_city - 1] }}</td>
+    <td>{{ df_city.Max_Likes[length_df_city - 1] }}</td>
+    <td>{{ df_city.Min_Likes[length_df_city - 1] }}</td>
+     <td>{{ df_city.Total_Comments[length_df_city - 1]}}</td>
+      <td>{{ df_city.Comments_Post[length_df_city - 1] }}</td>
+      <td>{{ df_city.Max_Comments[length_df_city - 1] }}</td>
+      <td>{{ df_city.Min_Comments[length_df_city - 1] }}</td>
+  </tr>
+</tfoot>
+</table>
+
+</div>
+
+
+
+
+<!-- ################################################ GRAPHS ######################################################-->
+
+<script>
+
+$(function () {
+    $('#chart-1').highcharts({
+        chart: {
+            zoomType: 'x'
+        },
+        title: {
+            text: 'Hungrygrls Instagram Total Followers over time'
+        },
+        subtitle: {
+            text: document.ontouchstart === undefined ?
+                    'Click and drag in the plot area to zoom in' :
+                    'Pinch the chart to zoom in'
+        },
+        xAxis: {
+            type: 'datetime',
+            minRange: 12 * 3600000 // fourteen days
+        },
+        yAxis: {
+            title: {
+                text: 'Total Followers'
+            }
+        },
+        legend: {
+            enabled: false
+        },
+        plotOptions: {
+            area: {
+                fillColor: {
+                    linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1},
+                    stops: [
+                        [0, Highcharts.getOptions().colors[0]],
+                        [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
+                    ]
+                },
+                marker: {
+                    radius: 2
+                },
+                lineWidth: 1,
+                states: {
+                    hover: {
+                        lineWidth: 1
+                    }
+                },
+                threshold: null
+            }
+        },
+
+        series: [{
+            type: 'area',
+            name: 'USD to EUR',
+            pointInterval: 1800 * 1000,
+            pointStart: Date.UTC(2014, 10, 15, 17,30,0),
+            data: [ {% for i in range(length) %} {{ data2[i] }}, {% endfor %}
+                
+            ]
+        }]
+    });
+});
+
+
+
+$(function () {
+
+    $.getJSON('http://www.highcharts.com/samples/data/jsonp.php?filename=large-dataset.json&callback=?', function (data) {
+
+        // Create a timer
+        var start = +new Date();
+
+        // Create the chart
+        $('#chart-2').highcharts('StockChart', {
+            chart: {
+                events: {
+                    load: function () {
+                        this.setTitle(null, {
+                            text: 'Built chart in ' + (new Date() - start) + 'ms'
+                        });
+                    }
+                },
+                zoomType: 'x'
+            },
+
+            rangeSelector: {
+                
+                buttons: [{
+
+                    type: 'day',
+                    count: 1,
+                    text: '1d'
+                }, 
+                {
+                    type: 'day',
+                    count: 3,
+                    text: '3d'
+                }, {
+                    type: 'week',
+                    count: 1,
+                    text: '1w'
+                }, {
+                    type: 'month',
+                    count: 1,
+                    text: '1m'
+                }, {
+                    type: 'month',
+                    count: 6,
+                    text: '6m'
+                }, {
+                    type: 'year',
+                    count: 1,
+                    text: '1y'
+                }, {
+                    type: 'all',
+                    text: 'All'
+                }],
+                selected: 3
+            },
+
+            yAxis: {
+                title: {
+                    text: 'Followers Added'
+                }
+            },
+
+            title: {
+                text: 'Followers added per Hour'
+            },
+
+            subtitle: {
+                text: 'Built chart in ...' // dummy text to reserve space for dynamic subtitle
+            },
+
+            series: [{
+                name: 'Added',
+                data: [{% for i in range(length) %} {{ data[i+2] }}, {% endfor %}],
+                pointStart: Date.UTC(2014, 10, 15, 17, 30, 0),
+                pointInterval: 1802 * 1000,
+                tooltip: {
+                    value: 1,
+                    valueSuffix: ' Followers'
+                }
+            }]
+
+        });
+    });
+});
+
+$(function () {
+
+    $(document).ready(function () {
+
+        // Build the chart
+        $('#chart-3').highcharts({
+            chart: {
+                plotBackgroundColor: null,
+                plotBorderWidth: null,
+                plotShadow: false
+            },
+            title: {
+                text: 'Followers net gained/lost over 1 hour intervals'
+            },
+            tooltip: {
+                pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+            },
+            plotOptions: {
+                pie: {
+                    allowPointSelect: true,
+                    cursor: 'pointer',
+                    dataLabels: {
+                        enabled: false
+                    },
+                    showInLegend: true
+                }
+            },
+            series: [{
+                type: 'pie',
+                name: 'Percentage',
+                data: [
+                    
+                    
+                    {
+                        name: 'Gained',
+                        y: {{ pos_neg[0] }},
+                        sliced: true,
+                        selected: true
+                    },
+                    ['None',       {{ pos_neg[1] }}],
+                    ['Lost',    {{ pos_neg[2] }}]
+                ]
+            }]
+        });
+    });
+
+});
+
+
+$(function () {
+    $('#chart-4').highcharts({
+        chart: {
+            type: 'scatter'
+        },
+        title: {
+            text: 'Hungrygrls Likes / Post (Since Hack)'
+        },
+        subtitle: {
+            text: 'Posts'
+        },
+        xAxis: {
+            type: 'datetime',
+            dateTimeLabelFormats: { // don't display the dummy year
+                month: '%e. %b',
+                year: '%b'
+            },
+            title: {
+                text: 'Date'
+            }
+        },
+        yAxis: {
+            title: {
+                text: 'Amount of Likes'
+            },
+            min: 100,
+            max: {{ yaxis }} 
+
+        },
+        tooltip: {
+            headerFormat: '<b>{series.name}</b><br>',
+            pointFormat: '{point.x:%e. %b}: {point.y:.2f} Likes'
+        },
+
+        plotOptions: {
+            series: {
+              cursor: 'pointer',
+              allowPointSelect: true,
+                animation: {
+                    duration: 5000
+                    
+                }
+            }
+        },
+        series: [{
+
+            name: 'Post',
+           
+            data: 
+              [
+      {% for i in range(length2) %}
+
+              [Date.UTC({{ Time_of_post[i] }}), {{ Likes_per_post[i] }} ],
+                
+      {% endfor %}
+
+        ]
+      
+          
+        }, ]
+    });
+});
+
+
+
+$(function () {
+    $('#chart-5').highcharts({
+        chart: {
+            type: 'column'
+        },
+        title: {
+            text: 'Total Posts by City'
+        },
+        subtitle: {
+            text: ''
+        },
+        xAxis: {
+            categories: [
+                'New York',
+                'Philadelphia',
+                'Washington DC',
+                'California',
+                'Other',
+                'Not Listed',
+            ]
+        },
+        yAxis: {
+            min: 0,
+            title: {
+                text: 'Posts'
+            }
+        },
+        tooltip: {
+            headerFormat: '<span style="font-size:10px">{point.key}</span><table>',
+            pointFormat: '<tr><td style="color:{series.color};padding:0">{series.name}: </td>' +
+                '<td style="padding:0"><b>{point.y} Posts </b></td></tr>',
+            footerFormat: '</table>',
+            shared: true,
+            useHTML: true
+        },
+        plotOptions: {
+            column: {
+                pointPadding: 0.2,
+                borderWidth: 0
+            }
+        },
+        series: [{
+            name: 'Total Posts',
+            data: [ {{ df_city.Total_Posts[0] }}, {{ df_city.Total_Posts[1] }}, {{ df_city.Total_Posts[2] }}, {{ df_city.Total_Posts[3] }}, {{ df_city.Total_Posts[4] }}, {{ df_city.Total_Posts[5] }} ]
+
+        } ]
+    });
+});
+
+</script>
+
+<script>
+/**
+ * Grid-light theme for Highcharts JS
+ * @author Torstein Honsi
+ */
+
+// Load the fonts
+Highcharts.createElement('link', {
+   href: '//fonts.googleapis.com/css?family=Dosis:400,600',
+   rel: 'stylesheet',
+   type: 'text/css'
+}, null, document.getElementsByTagName('head')[0]);
+
+Highcharts.theme = {
+   colors: ["#7cb5ec", "#f7a35c", "#90ee7e", "#7798BF", "#aaeeee", "#ff0066", "#eeaaee",
+      "#55BF3B", "#DF5353", "#7798BF", "#aaeeee"],
+   chart: {
+      backgroundColor: null,
+      style: {
+         fontFamily: "Franklin Gothic"
+         fontWeight: 'normal'
+      }
+   },
+   title: {
+      style: {
+         fontSize: '16px',
+         fontWeight: 'bold',
+         textTransform: 'uppercase'
+      }
+   },
+   tooltip: {
+      borderWidth: 0,
+      backgroundColor: 'rgba(219,219,216,0.8)',
+      shadow: false
+   },
+   legend: {
+      itemStyle: {
+         fontWeight: 'bold',
+         fontSize: '13px'
+      }
+   },
+   xAxis: {
+      gridLineWidth: 1,
+      labels: {
+         style: {
+            fontSize: '12px'
+         }
+      }
+   },
+   yAxis: {
+      minorTickInterval: 'auto',
+      title: {
+         style: {
+            textTransform: 'uppercase'
+         }
+      },
+      labels: {
+         style: {
+            fontSize: '12px'
+         }
+      }
+   },
+   plotOptions: {
+      candlestick: {
+         lineColor: '#404048'
+      }
+   },
+
+
+   // General
+   background2: '#F0F0EA'
+   
+};
+
+// Apply the theme
+Highcharts.setOptions(Highcharts.theme);
+</script>
+<!-- ################################################ GRAPHS ######################################################-->
+ 
+
+
+ </div>
+</div>
+ <br><br>
+ 
+ 
+{% endblock %}
