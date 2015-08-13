@@ -1,24 +1,24 @@
-import YOAuth  #import authentication function 
-import yql, os, sqlite3, datetime, pandas as pd, numpy as np  #import authentification libraries and dataframe libraries
-from yql.storage import FileTokenStore
-from leagues import *
-from convert_hidden_to_user import *
+import sys, os, sqlite3, yql
+from yql.storage import FileTokenStore 
+import pandas as pd
+from Send_Text import *
+from send_text_test import *
+
+
+
 
 ######################
 #  DATABASE CONNECTION
 ######################
-PROJECT_ROOT = os.path.dirname(os.path.realpath(__file__)) #create path to database
-DATABASE_SCOREBOARD = os.path.join(PROJECT_ROOT, 'data', 'fantasy_football.db')
-
-conn = sqlite3.connect(DATABASE_SCOREBOARD) #connect to database
+PROJECT_ROOT = os.path.dirname(os.path.realpath(__file__)) #makes the folder this file is stored in the root folder
+DATABASE_SCOREBOARD = os.path.join(PROJECT_ROOT, 'data', 'fantasy_football.db') 
+conn = sqlite3.connect(DATABASE_SCOREBOARD) #connect to database scoreboard lcoated in data folder
 c = conn.cursor()
 ######################
-# END DATABASE 
+# END DATABASE  
 ######################
+##########################################################################################################################################################
 
-######################
-# YAHOO DEV. AUTH
-####################
 consumer_key = ('dj0yJmk9SGRrbkt5SHFSd2hVJmQ9WVdrOVJqUTRiMVZLTXpRbWNHbzlNQS0tJnM9Y29uc3VtZXJzZWNyZXQmeD1iNQ--')
 consumer_secret = ('3deb9f91d5086dec9c9dfe1ac8925eecb5741070')
 
@@ -44,139 +44,187 @@ else:
 	token = y3.check_token(stored_token)
 	if token != stored_token:
 		token_store.set('foo', token)
+##########################################################################################################################################################
+##########################################################################################################################################################
+##########################################################################################################################################################
 
-
-##################################################################################################################
-#################################          END AUTHENTICATION       ##############################################
-##################################################################################################################
-
-
-
-
-
-def get_standings_data(league_number):
-
-	query = "select * from fantasysports.leagues.standings where league_key=" + league_number
+def career_record(table, mobile, carrier, manager, opponent, week, i):
+	#career record against that opponent#
+	#Gets total career matchups (including playoffs)
+	x = int(pd.read_sql("SELECT COUNT(*) AS total FROM %s WHERE (manager1_name = %s AND manager2_name = %s AND team1_points>0) OR (manager2_name = %s AND manager1_name = %s AND team1_points>0)" % (table, manager, opponent, manager, opponent), conn)['total'][0])
+	#Gets total matchups won by manager
+	y = int(pd.read_sql("SELECT COUNT(*) AS total FROM %s WHERE ((manager1_name = %s AND manager2_name = %s) AND team1_points > team2_points) OR ((manager2_name = %s AND manager1_name = %s) AND team2_points > team1_points)" % (table, manager, opponent, manager, opponent), conn)['total'][0])
 	
-	data_yql=y3.execute(query, token=token)
-	data = data_yql.rows
-	data_id=data[0]
-	data=data[0]['standings']['teams']['team']  #step through to dictionary with 14 teams
-	print len(data)
-	for i in range(len(data)):
-		
-		manager_team.append(data[i]['name'])
-		
-		
-		try:
-			manager = (str(data[i]['managers']['manager']['nickname']))
-			
-		except:
-			manager = (str(data[i]['managers']['manager'][0]['nickname']))   #if two managers exist just take the first one
-			
+	try: 
+		career_winning_percentage = '{:.2%}'.format(float(y)/float(x))
+	except ZeroDivisionError:
+		career_winning_percentage = 0
+	wins= str(y)
+	losses = x-y
+	losses = str(losses)
+	message = "Goodmorning %s, today you play %s in fantasy football. Your career winning perc is %s with a record of %s - %s." %(manager, opponent, career_winning_percentage, wins, losses)
+	#message = 'This is a test, you are receiving this b/c you are in Calverts Fantasy Football League'
+	
+	for ii in mobile:
 
-		manager = modify_hidden_user(data[i]['name'], manager, email) #send to a function that searches for teams I know have hidden managers or duplicate nicknames, the file then gives the correct nickname mnaually
-		
+		Send_Text_Test(ii, message, carrier)  #function to send text via gmail
+
+
+
+def current_projections(mobile,carrier, week, manager, manager_projected, opponent, opponent_projected):
+
+	difference = float(abs(manager_projected - opponent_projected)) #absolute difference in projections
+	if manager_projected - opponent_projected > 0:  #labels binary variable a to show whether manager is favored
+		is_favored = True
+	else:
+		is_favored = False
+
+	c.execute("SELECT COUNT(*) AS total FROM projected_points WHERE projdiff > %s" %difference)
+	x = c.fetchone()[0]
+
+	y = (pd.read_sql ( "SELECT COUNT(*) AS total FROM \
+		(\
+	SELECT * from scoreboard WHERE (team1_projected - team2_projected >%s) AND ( team1_points > team2_points) \
+	UNION ALL \
+	SELECT * from scoreboard WHERE (team2_projected - team1_projected >%s) AND ( team2_points > team1_points) \
+	UNION ALL \
+	SELECT * from scoreboard_ex WHERE (team1_projected - team2_projected >%s) AND ( team1_points > team2_points)\
+	UNION ALL \
+	SELECT * from scoreboard_ex WHERE (team2_projected - team1_projected >%s) AND ( team2_points > team1_points)\
+    )" %(difference, difference, difference, difference), conn))['total'][0]
+
+
+	if is_favored:
+		rate_win = '{:.2%}'.format(float(y)/float(x))
+		message = "Historically in Calvert's fantasy leagues a player with a positive %s projected points differential wins %s of the time" %(difference, rate_win)
+	else:
+		rate_win = '{:.2%}'.format((float(1-(y)/float(x))))
+		message = "Historically in Calvert's fantasy leagues a player with a negative %s projected points differential wins %s of the time" %(difference, rate_win)
+	
+	for ii in mobile:
+
+		Send_Text_Test(ii, message, carrier)
+
+	
+
+def career_avg_points(league, manager, oppoenent, week):
+	#career avg points in this week
+	#career avg poitns against this opponent
+
+	pass
+
+
+
+##########################################################################################################################################################
+##########################################################################################################################################################
+##########################################################################################################################################################
+
+
+if __name__ == "__main__":
+	#get current year, leagueid, etc.
+	league_data_lm = pd.read_sql("SELECT max(year) AS year, sport_id, league_id FROM leagues WHERE type = 'LM';", conn)
+	league_data_ex = pd.read_sql("SELECT max(year) AS year, sport_id, league_id FROM leagues WHERE type = 'EX';", conn)
+
+	year_lm = str((league_data_lm)['year'][0])
+	sport_id_lm = str(league_data_lm['sport_id'][0])
+	league_id_lm = str(league_data_lm['league_id'][0])
+
+	year_ex = str((league_data_ex)['year'][0])
+	sport_id_ex = str(league_data_ex['sport_id'][0])
+	league_id_ex = str(league_data_ex['league_id'][0])
+
+	current_managers_lm = pd.read_sql("SELECT manager_name AS managers FROM standings WHERE year = %s GROUP BY managers" %year_lm, conn)['managers'].tolist()
+	current_managers_ex = pd.read_sql("SELECT manager_name AS managers FROM standings_ex WHERE year = %s GROUP BY managers" %year_ex, conn)['managers'].tolist()	
+
+	query_lm = "select * from fantasysports.leagues.scoreboard where league_key='" + sport_id_lm + ".l." + league_id_lm + "' and week in (1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)"
+	query_ex = "select * from fantasysports.leagues.scoreboard where league_key='" + sport_id_ex + ".l." + league_id_ex + "' and week in (1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16)"
+
+	data_yql_lm=y3.execute(query_lm, token=token)
+	data_lm = data_yql_lm.rows
+	current_week_lm = int(data_lm[0]['current_week'])
+
+	data_yql_ex=y3.execute(query_ex, token=token)
+	data_ex = data_yql_ex.rows
+	current_week_ex = int(data_ex[0]['current_week'])
+	
+	
+	for i in current_managers_lm:
+		manager = "'" + i + "'"
+
 		try:
-			email = (str(data[i]['managers']['manager']['email']))
-			emails.append(email)
+			current_week_data_lm = pd.read_sql("SELECT manager1_name AS opponent, team1_projected AS opponent_projected, team2_projected AS manager_projected FROM scoreboard WHERE year = %s AND week = %s AND manager2_name = %s"  %(year_lm, current_week_lm, manager), conn)
+			manager_opponent = current_week_data_lm['opponent'][0]
+			opponent_projected = current_week_data_lm['opponent_projected'][0]
+			manager_projected = current_week_data_lm['manager_projected'][0]
 		except:
 			try:
-		 		email = (str(data[i]['managers']['manager'][0]['email']))
-		 		emails.append(email)
-		 	except:
-		 		email = 'Null'
-		 		emails.append(email)
-		manager = 
-
-
-
-#append final found manager
-		manager_name.append(manager)
+				current_week_data_lm = pd.read_sql("SELECT manager2_name AS opponent, team2_projected AS opponent_projected, team1_projected AS manager_projected FROM scoreboard WHERE year = %s AND week = %s AND manager1_name = %s"  %(year_lm, current_week_lm, manager), conn)
+				manager_opponent = current_week_data_lm['opponent'][0]
+				opponent_projected = current_week_data_lm['opponent_projected'][0]
+				manager_projected = current_week_data_lm['manager_projected'][0]
+			except:
+				print "failed to find opponent for " + i + "in local database"
+				print "skipping all processes for " + i
+				continue
 		
-	
-	
+		manager_opponent = "'" + manager_opponent + "'"
+		
+		mobile = pd.read_sql("SELECT number FROM mobile WHERE nickname = %s AND type = 'LM'" %manager, conn)['number'].tolist()
+		carrier = str(pd.read_sql("SELECT carrier FROM mobile WHERE nickname = %s" %manager, conn)['carrier'][0])
+		table = 'scoreboard'
 
-
-############################################################################################################
-############################################################################################################
-
-
-if __name__== "__main__":
-
-	##############################
-	#CREATE DRAFT DB FOR LM LEAGUE
-	##############################
-
-	#create empty lists to save data
-
-	manager_name = []
-	manager_team = []
-	emails = []
-
-	y=get_league_ids_lm()
-
-	
-	for i in y:
+		#################### SEND TO FUNCTIONS #######################
 		try:
-			get_standings_data(i)
-			
+			career_record(table, mobile, carrier, manager, manager_opponent, current_week_lm, i)
+			print "corrctly ran analytics for manager " +i
 		except:
-			pass	
-	
-	print manager_team
-	print emails
-	
-	dict = {
-					 
-					
-					'manager_name': manager_name,
-					'manager_team': manager_team,
-					'email': emails
-	
-					}
+			print "failed to send text message to " + i + " due to error in function career_record",  sys.exc_info()[0]
+		try:	
+			current_projections(mobile, carrier, current_week_lm, manager, manager_projected, manager_opponent, opponent_projected)
+			print "corrctly ran analytics for manager " + i
+		except:
+			print "failed to send text message to " + i + " due to error in function current_projections", sys.exc_info()[0]
+		#################### SEND TO FUNCTIONS #######################
 
 
-	data = pd.DataFrame(dict, columns=['manager_name', 'manager_team', 'email'])	
+	for i in current_managers_ex:
+		manager = "'" + i + "'"
 
-	pd.DataFrame.to_sql(data, 'test', conn, if_exists='replace', index=None)
-
-	conn.commit()
-
-	
-
-	##############################
-	#CREATE DRAFT DB FOR EX LEAGUE
-	##############################
-
-	#create empty lists to save data
-
-	manager_name = []
-	manager_team = []
-	emails = []
-
-	y=get_league_ids_ex()
-
-	
-	for i in y:
 		try:
-			get_standings_data(i)
+			current_week_data_ex = pd.read_sql("SELECT manager1_name AS opponent, team1_projected AS opponent_projected, team2_projected AS manager_projected FROM scoreboard_ex WHERE year = %s AND week = %s AND manager2_name = %s"  %(year_ex, current_week_ex, manager), conn)
+			manager_opponent = current_week_data_ex['opponent'][0]
+			opponent_projected = current_week_data_ex['opponent_projected'][0]
+			manager_projected = current_week_data_ex['manager_projected'][0]
 		except:
-			pass	
+			try:
+				current_week_data_ex = pd.read_sql("SELECT manager2_name AS opponent, team2_projected AS opponent_projected, team1_projected AS manager_projected FROM scoreboard_ex WHERE year = %s AND week = %s AND manager1_name = %s"  %(year_ex, current_week_ex, manager), conn)
+				manager_opponent = current_week_data_ex['opponent'][0]
+				opponent_projected = current_week_data_ex['opponent_projected'][0]
+				manager_projected = current_week_data_ex['manager_projected'][0]
+			except:
+				print "failed to find opponent for " + i + "in local database"
+				print "skipping all processes for " + i
+				continue
+
+		manager_opponent = "'" + manager_opponent + "'"
+		
+		mobile = pd.read_sql("SELECT number FROM mobile WHERE nickname = %s AND type = 'EX'" %manager, conn)['number'].tolist()
+		carrier = str(pd.read_sql("SELECT carrier FROM mobile WHERE nickname = %s" %manager, conn)['carrier'][0])
+		table = 'scoreboard_ex'
 
 		
-	dict = {
-					 
-					'manager_name': manager_name,
-					'manager_team': manager_team,
-					'email': emails
-	
-					}
+		#################### SEND TO FUNCTIONS #######################
+		try:
+			career_record(table, mobile, carrier, manager, manager_opponent, current_week_ex)
+			print "corrctly ran analytics for manager " + i
+		except:
+			print "failed to send text message to " + i + " due to error in function career_record",   sys.exc_info()[0]
+		try:
+			current_projections(mobile,carrier, current_week_ex, manager, manager_projected, manager_opponent, opponent_projected)
+			print "corrctly ran analytics for manager " + i
+		except:
+			print "failed to send text message to " + i + " due to error in function current_projections",  sys.exc_info()[0]
+		#################### SEND TO FUNCTIONS #######################
 
-	
-	data = pd.DataFrame(dict, columns=['manager_name', 'manager_team', 'email'])	
-
-	pd.DataFrame.to_sql(data, 'test', conn, if_exists='replace', index=None)
-
-	conn.commit()
+		#CRONTAB runs this program every sunday 
 

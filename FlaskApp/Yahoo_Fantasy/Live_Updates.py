@@ -6,6 +6,7 @@ from Send_Text import *
 
 
 
+
 ######################
 #  DATABASE CONNECTION
 ######################
@@ -44,10 +45,8 @@ else:
 	if token != stored_token:
 		token_store.set('foo', token)
 ##########################################################################################################################################################
-
-
-
-
+##########################################################################################################################################################
+##########################################################################################################################################################
 
 def career_record(table, mobile, carrier, manager, opponent, week):
 	#career record against that opponent#
@@ -59,20 +58,17 @@ def career_record(table, mobile, carrier, manager, opponent, week):
 	try: 
 		career_winning_percentage = '{:.2%}'.format(float(y)/float(x))
 	except ZeroDivisionError:
-		career_record_vs_opponent = 0
+		career_winning_percentage = 0
 	wins= str(y)
 	losses = x-y
 	losses = str(losses)
 	message = "Goodmorning %s, today you play %s in fantasy football. Your career winning perc is %s with a record of %s - %s." %(manager, opponent, career_winning_percentage, wins, losses)
 	#message = 'This is a test, you are receiving this b/c you are in Calverts Fantasy Football League'
-
-	Send_Text(mobile, message, carrier)
-
-
 	
-	#career record in this specific week
-	#career YTD record at this specific week
-	
+	for ii in mobile:
+
+		Send_Text(ii, message, carrier)  #function to send text via gmail
+
 
 
 def current_projections(mobile,carrier, week, manager, manager_projected, opponent, opponent_projected):
@@ -83,13 +79,8 @@ def current_projections(mobile,carrier, week, manager, manager_projected, oppone
 	else:
 		is_favored = False
 
-	x = (pd.read_sql ( "SELECT COUNT(*) AS total FROM \
-		(\
-	SELECT * from scoreboard WHERE (team1_projected - team2_projected > %s) OR (team2_projected - team1_projected >%s) \
-	UNION ALL \
-	SELECT * from scoreboard_ex WHERE (team1_projected - team2_projected >%s) OR (team2_projected - team1_projected >%s)\
-    )" %(difference, difference, difference, difference), conn))['total'][0]
-
+	c.execute("SELECT COUNT(*) AS total FROM projected_points WHERE projdiff > %s" %difference)
+	x = c.fetchone()[0]
 
 	y = (pd.read_sql ( "SELECT COUNT(*) AS total FROM \
 		(\
@@ -102,6 +93,7 @@ def current_projections(mobile,carrier, week, manager, manager_projected, oppone
 	SELECT * from scoreboard_ex WHERE (team2_projected - team1_projected >%s) AND ( team2_points > team1_points)\
     )" %(difference, difference, difference, difference), conn))['total'][0]
 
+
 	if is_favored:
 		rate_win = '{:.2%}'.format(float(y)/float(x))
 		message = "Historically in Calvert's fantasy leagues a player with a positive %s projected points differential wins %s of the time" %(difference, rate_win)
@@ -109,14 +101,12 @@ def current_projections(mobile,carrier, week, manager, manager_projected, oppone
 		rate_win = '{:.2%}'.format((float(1-(y)/float(x))))
 		message = "Historically in Calvert's fantasy leagues a player with a negative %s projected points differential wins %s of the time" %(difference, rate_win)
 	
-	#message = 'This is a test, you are receiving this b/c you are in Calverts Fantasy Football League'	
-	
-	Send_Text(mobile, message, carrier)
+	for ii in mobile:
 
-	#Career winning % at current projections..
-	#Individual winning % at current projections..	
-	
+		Send_Text(ii, message, carrier)
 
+	
+	
 def career_avg_points(league, manager, oppoenent, week):
 	#career avg points in this week
 	#career avg poitns against this opponent
@@ -125,20 +115,13 @@ def career_avg_points(league, manager, oppoenent, week):
 
 
 
-
-
-
-
-
-
-
-
+##########################################################################################################################################################
+##########################################################################################################################################################
 ##########################################################################################################################################################
 
 
-
 if __name__ == "__main__":
-
+	#get current year, leagueid, etc.
 	league_data_lm = pd.read_sql("SELECT max(year) AS year, sport_id, league_id FROM leagues WHERE type = 'LM';", conn)
 	league_data_ex = pd.read_sql("SELECT max(year) AS year, sport_id, league_id FROM leagues WHERE type = 'EX';", conn)
 
@@ -167,89 +150,81 @@ if __name__ == "__main__":
 	
 	for i in current_managers_lm:
 		manager = "'" + i + "'"
-		print "sending text message to" + manager
+
 		try:
 			current_week_data_lm = pd.read_sql("SELECT manager1_name AS opponent, team1_projected AS opponent_projected, team2_projected AS manager_projected FROM scoreboard WHERE year = %s AND week = %s AND manager2_name = %s"  %(year_lm, current_week_lm, manager), conn)
-			print current_week_data_lm
 			manager_opponent = current_week_data_lm['opponent'][0]
 			opponent_projected = current_week_data_lm['opponent_projected'][0]
 			manager_projected = current_week_data_lm['manager_projected'][0]
-			print manager_opponent
 		except:
-			current_week_data_lm = pd.read_sql("SELECT manager2_name AS opponent, team2_projected AS opponent_projected, team1_projected AS manager_projected FROM scoreboard WHERE year = %s AND week = %s AND manager1_name = %s"  %(year_lm, current_week_lm, manager), conn)
-			
-			manager_opponent = current_week_data_lm['opponent'][0]
-			opponent_projected = current_week_data_lm['opponent_projected'][0]
-			manager_projected = current_week_data_lm['manager_projected'][0]
-			
+			try:
+				current_week_data_lm = pd.read_sql("SELECT manager2_name AS opponent, team2_projected AS opponent_projected, team1_projected AS manager_projected FROM scoreboard WHERE year = %s AND week = %s AND manager1_name = %s"  %(year_lm, current_week_lm, manager), conn)
+				manager_opponent = current_week_data_lm['opponent'][0]
+				opponent_projected = current_week_data_lm['opponent_projected'][0]
+				manager_projected = current_week_data_lm['manager_projected'][0]
+			except:
+				print "failed to find opponent for " + i + "in local database"
+				print "skipping all processes for " + i
+				continue
 		
-
 		manager_opponent = "'" + manager_opponent + "'"
 		
-
-		mobile = str(pd.read_sql("SELECT number FROM mobile WHERE nickname = %s" %manager, conn)['number'][0])
+		mobile = pd.read_sql("SELECT number FROM mobile WHERE nickname = %s AND type = 'LM'" %manager, conn)['number'].tolist()
 		carrier = str(pd.read_sql("SELECT carrier FROM mobile WHERE nickname = %s" %manager, conn)['carrier'][0])
 		table = 'scoreboard'
 
 		#################### SEND TO FUNCTIONS #######################
-		career_record(table, mobile, carrier, manager, manager_opponent, current_week_lm)
-		current_projections(mobile, carrier, current_week_lm, manager, manager_projected, manager_opponent, opponent_projected)
+		try:
+			career_record(table, mobile, carrier, manager, manager_opponent, current_week_lm)
+			print "corrctly ran analytics for manager " +i
+		except:
+			print "failed to send text message to " + i + " due to error in function career_record",  sys.exc_info()[0]
+		try:	
+			current_projections(mobile, carrier, current_week_lm, manager, manager_projected, manager_opponent, opponent_projected)
+			print "corrctly ran analytics for manager " + i
+		except:
+			print "failed to send text message to " + i + " due to error in function current_projections", sys.exc_info()[0]
 		#################### SEND TO FUNCTIONS #######################
 
 
 	for i in current_managers_ex:
 		manager = "'" + i + "'"
-		print "attempting text message to" + manager
+
 		try:
 			current_week_data_ex = pd.read_sql("SELECT manager1_name AS opponent, team1_projected AS opponent_projected, team2_projected AS manager_projected FROM scoreboard_ex WHERE year = %s AND week = %s AND manager2_name = %s"  %(year_ex, current_week_ex, manager), conn)
 			manager_opponent = current_week_data_ex['opponent'][0]
 			opponent_projected = current_week_data_ex['opponent_projected'][0]
 			manager_projected = current_week_data_ex['manager_projected'][0]
-			print manager_opponent
 		except:
 			try:
 				current_week_data_ex = pd.read_sql("SELECT manager2_name AS opponent, team2_projected AS opponent_projected, team1_projected AS manager_projected FROM scoreboard_ex WHERE year = %s AND week = %s AND manager1_name = %s"  %(year_ex, current_week_ex, manager), conn)
 				manager_opponent = current_week_data_ex['opponent'][0]
 				opponent_projected = current_week_data_ex['opponent_projected'][0]
 				manager_projected = current_week_data_ex['manager_projected'][0]
-				print manager_opponent
 			except:
-				print "failed to find opponent for " + manager
+				print "failed to find opponent for " + i + "in local database"
+				print "skipping all processes for " + i
 				continue
 
 		manager_opponent = "'" + manager_opponent + "'"
 		
-		mobile = str(pd.read_sql("SELECT number FROM mobile WHERE nickname = %s" %manager, conn)['number'][0])
+		mobile = pd.read_sql("SELECT number FROM mobile WHERE nickname = %s AND type = 'EX'" %manager, conn)['number'].tolist()
 		carrier = str(pd.read_sql("SELECT carrier FROM mobile WHERE nickname = %s" %manager, conn)['carrier'][0])
 		table = 'scoreboard_ex'
 
 		
-
 		#################### SEND TO FUNCTIONS #######################
 		try:
 			career_record(table, mobile, carrier, manager, manager_opponent, current_week_ex)
+			print "corrctly ran analytics for manager " + i
 		except:
-			print "failed to send text message to " + manager
+			print "failed to send text message to " + i + " due to error in function career_record",   sys.exc_info()[0]
 		try:
 			current_projections(mobile,carrier, current_week_ex, manager, manager_projected, manager_opponent, opponent_projected)
+			print "corrctly ran analytics for manager " + i
 		except:
-			print "failed to send text message to " + manager
+			print "failed to send text message to " + i + " due to error in function current_projections",  sys.exc_info()[0]
 		#################### SEND TO FUNCTIONS #######################
 
-	
-
-
-########CRONTAB to Send Text Message to each player in both leagues AT
-######## 10 AM EST EACH SUNDAY FOR 16 WEEKS...Figure this out or just hardcode the dates
-
-
-
-
-
-
-
-
-
-
-
+		#CRONTAB runs this program every sunday 
 
