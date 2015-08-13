@@ -148,24 +148,17 @@ def stubhubselling():
 
 		conn.commit()
 		
-def findwildevent():
-	
-	pass
 
-def posttickets(team):
-
-	if team == 'wild':
-		pass
-
-	pass
-
-def updatetickets(team):
-#this is a test
-	pass
 		
 if __name__ == "__main__":
 
 	stubhubsales()
 	stubhubselling()
+
+
+
+	#what is good
+	#yup
+	#yuppp
 
 
